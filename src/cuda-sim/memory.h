@@ -51,10 +51,14 @@ typedef address_type mem_addr_t;
 
 template<unsigned BSIZE> class mem_storage {
 public:
+
    mem_storage( const mem_storage &another )
    {
       m_data = (unsigned char*)calloc(1,BSIZE);
       memcpy(m_data,another.m_data,BSIZE);
+
+      managed(false);
+      valid(false);
    }
    mem_storage()
    {
@@ -94,6 +98,9 @@ public:
 private:
    unsigned m_nbytes;
    unsigned char *m_data;
+
+   bool valid; //
+   
 };
 
 class ptx_thread_info;

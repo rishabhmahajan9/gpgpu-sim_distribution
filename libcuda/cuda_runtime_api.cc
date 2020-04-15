@@ -501,6 +501,46 @@ cudaError_t cudaPeekAtLastError(void)
 	return g_last_cudaError;
 }
 
+__host__ cudaError_t CUDARTAPI cudaMallocManaged(void **devPtr, size_t size) 
+{
+	if(g_debug_execution >= 3){
+	    announce_call(__my_func__);
+    }
+
+	CUctx_st* context = GPGPUSim_Context();
+
+    //create a piece of memory for cpu side so that cpu side initialization code doesn't get SIGSEGV
+	void *cpuMemPtr = (void *)malloc(size);
+
+	//get a regular cudaMalloc memory
+	void *gpuMemPtr = context->get_device()->get_gpgpu()->gpu_malloc_managed(size);	// To be defined (gpu_malloc_managed)
+
+	//// TO_BE_ADDED :   A Function which creates a tuple and add it the map/dictionary(gpu_insert_managed_allocation)
+	//maintain a map keyed by cpu memory pointer 
+	//with a tuple of gpu malloc memory pointe and allocation size as value
+    context->get_device()->get_gpgpu()->gpu_insert_managed_allocation((uint64_t)cpuMemPtr, (uint64_t)gpuMemPtr, size);
+	
+	//at the begining itself allocate memory storage for gpu malloced allocation
+	//note after this point data is not initialized on CPU 
+	//so we need to copy the actual data on kernel launch 
+	context->get_device()->get_gpgpu()->memcpy_to_gpu((size_t)gpuMemPtr, (void *)cpuMemPtr, size);
+
+	//return cpu memory pointer to the user code 
+	//such that cpu side code can access the memory
+	*devPtr = cpuMemPtr;
+
+	if(g_debug_execution >= 3){
+		printf("GPGPU-Sim PTX: cudaMallocManaging %zu bytes starting at 0x%llx..\n",size, (unsigned long long) *devPtr);
+    }
+
+	if ( *devPtr  ) {
+		return g_last_cudaError = cudaSuccess;
+	} else {
+		return g_last_cudaError = cudaErrorMemoryAllocation;
+	}
+}
+
+
 __host__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size) 
 {
 	if(g_debug_execution >= 3){

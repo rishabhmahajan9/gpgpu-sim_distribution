@@ -104,7 +104,7 @@ template<unsigned BSIZE> void memory_space_impl<BSIZE>::read_single_block( mem_a
    }
    typename map_t::const_iterator i = m_data.find(blk_idx);
    if( i == m_data.end() ) {
-      for( size_t n=0; n < length; n++ ) 
+      for( size_t n=0; n < length; n++ )
          ((unsigned char*)data)[n] = (unsigned char) 0;
       //printf("GPGPU-Sim PTX:  WARNING reading %zu bytes from unititialized memory at address 0x%x in space %s\n", length, addr, m_name.c_str() );
    } else {

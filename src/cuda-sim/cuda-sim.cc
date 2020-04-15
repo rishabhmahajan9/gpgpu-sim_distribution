@@ -422,6 +422,24 @@ void* gpgpu_t::gpu_malloc( size_t size )
    return(void*) result;
 }
 
+// New Change Added, gpu_malloc RISHABH
+void* gpgpu_t::gpu_malloc_managed( size_t size )
+{
+   // TO_BE_ADDED : the heap pointer to be updated
+   return gpu_malloc(size);
+}
+
+void gpgpu_t::gpu_insert_managed_allocation ( uint64_t cpuMemAddr, uint64_t gpuMemAddr, size_t size )
+{
+   struct allocation_info* a_i = (struct allocation_info*)malloc(sizeof(struct allocation_info));
+
+   a_i->gpu_mem_addr    = gpuMemAddr;
+   a_i->allocation_size = size;
+   a_i->copied          = false;
+
+   managedAllocations.insert(std::pair<uint64_t, struct allocation_info*>(cpuMemAddr, a_i));
+}
+
 void* gpgpu_t::gpu_mallocarray( size_t size )
 {
    unsigned long long result = m_dev_malloc;
