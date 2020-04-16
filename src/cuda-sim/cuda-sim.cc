@@ -440,6 +440,11 @@ void gpgpu_t::gpu_insert_managed_allocation ( uint64_t cpuMemAddr, uint64_t gpuM
    managedAllocations.insert(std::pair<uint64_t, struct allocation_info*>(cpuMemAddr, a_i));
 }
 
+void gpgpu_t::gpu_get_managed_allocations (){
+   return managedAllocations;
+}
+
+// 
 void* gpgpu_t::gpu_mallocarray( size_t size )
 {
    unsigned long long result = m_dev_malloc;

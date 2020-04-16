@@ -95,11 +95,33 @@ public:
       fflush(fout);
    }
 
+// Kshitiz Added functions for setting page or checking if it is managed
+   void set_managed(){
+      managed = true;
+   }
+
+   bool is_managed(){
+      return managed;
+   }
+
+//Valid flag simulates page table like fucntion. If the page table entry not present valid =
+   bool is_valid	()	{ 
+      return valid;  
+   }
+   
+   void validate_page	()	{
+      valid = true;
+   }
+   void invalidate_page	()	{
+      valid = false;
+   }
+
 private:
    unsigned m_nbytes;
    unsigned char *m_data;
 
-   bool valid; //
+   bool managed;
+   bool valid;
    
 };
 

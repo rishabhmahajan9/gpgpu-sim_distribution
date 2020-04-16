@@ -1539,6 +1539,31 @@ __host__ cudaError_t CUDARTAPI cudaSetupArgument(const void *arg, size_t size, s
     }
 	gpgpusim_ptx_assert( !g_cuda_launch_stack.empty(), "empty launch stack" );
 	kernel_config &config = g_cuda_launch_stack.back();
+
+	//**** OUR CHANGES (RISHABH)
+
+	CUctx_st* context = GPGPUSim_Context();
+
+	uint64_t hostPtr = *(uint64_t *)arg;
+
+    struct allocation_info*  allocation = context->get_device()->get_gpgpu()->gpu_get_managed_allocation(hostPtr);
+
+	if (allocation != NULL) { //verify whether a pointer to malloc managed memory
+	    //during the kernel launch copy all the data from cpu to gpu
+	    //pages are valid or invalid are tested later
+            uint64_t devPtr = allocation->gpu_mem_addr;
+
+		if (!allocation->copied) {
+			context->get_device()->get_gpgpu()->memcpy_to_gpu( (size_t)devPtr, (void *)hostPtr, allocation->allocation_size);
+			allocation->copied = true;
+	    }
+
+	    //override the pointer argument to refer to gpu side allocation rather than cpu side memory
+	    //gpgpu-sim only understands pointer reference from m_dev_malloc 
+	    *(uint64_t *)arg = devPtr;
+    }
+
+	// ******	
 	config.set_arg(arg,size,offset);
 	printf("GPGPU-Sim PTX: Setting up arguments for %zu bytes starting at 0x%llx..\n",size, (unsigned long long) arg);
 
@@ -2836,9 +2861,24 @@ cudaError_t cudaDeviceReset ( void ) {
     }
 	return g_last_cudaError = cudaSuccess;
 }
-cudaError_t CUDARTAPI cudaDeviceSynchronize(void){
+
+
+cudaError_t CUDARTAPI cudaDeviceSynchronize(void) { 
+	
 	if(g_debug_execution >= 3){
 	    announce_call(__my_func__);
+    }
+
+	for(std::map<uint64_t, struct allocation_info*>::const_iterator iter = managedAllocations.begin(); iter != managedAllocations.end(); iter++) 
+	{
+		if (iter->second->copied) 
+		{
+			uint64_t hostPtr = iter->first;
+            uint64_t devPtr  = iter->second->gpu_mem_addr;
+            size_t   size    = iter->second->allocation_size;
+			iter->second->copied = false;
+            context->get_device()->get_gpgpu()->memcpy_from_gpu( (void *)hostPtr, (size_t)devPtr, size);   
+		}
     }
 	//Blocks until the device has completed all preceding requested tasks
 	synchronize();

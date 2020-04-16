@@ -568,6 +568,12 @@ struct allocation_info {
 class gpgpu_t {
 public:
     gpgpu_t( const gpgpu_functional_sim_config &config );
+
+    // Added Changes Kshitiz for Managed Allocations
+    void* gpu_malloc_managed( size_t size );
+    void  gpu_insert_managed_allocation( uint64_t cpuMemAddr, uint64_t gpuMemAddr, size_t size );
+    void  gpu_get_managed_allocations();
+
     int checkpoint_option;
     int checkpoint_kernel;
     int checkpoint_CTA;
@@ -577,8 +583,6 @@ public:
     int checkpoint_CTA_t;
     int checkpoint_insn_Y;
     void* gpu_malloc( size_t size );
-    void* gpu_malloc_managed( size_t size );
-    void  gpu_insert_managed_allocation( uint64_t cpuMemAddr, uint64_t gpuMemAddr, size_t size )
     void* gpu_mallocarray( size_t count );
     void  gpu_memset( size_t dst_start_addr, int c, size_t count );
     void  memcpy_to_gpu( size_t dst_start_addr, const void *src, size_t count );
